@@ -1,0 +1,26 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/admin/**",
+        "run": {
+          "serviceId": "nocobase-backend",
+          "region": "europe-west2"
+        }
+      },
+      {
+        "source": "/**",
+        "run": {
+          "serviceId": "nextjs-bff",
+          "region": "europe-west2"
+        }
+      }
+    ]
+  }
+}

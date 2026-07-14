@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # --- RELATIONAL DB ---
+  database:
+    image: postgres:15-alpine
+    container_name: valo-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: valo_user
+      POSTGRES_PASSWORD: valo_secure_password_2026
+      POSTGRES_DB: valo_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U valo_user -d valo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- MEMORY STORE / CACHE ---
+  cache:
+    image: redis:7-alpine
+    container_name: valo-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- NOCOBASE ADMIN CAPABILITY ---
+  nocobase:
+    build:
+      context: ./apps/nocobase
+    container_name: valo-nocobase
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      - DB_DIALECT=postgres
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_DATABASE=valo_db
+      - DB_USER=valo_user
+      - DB_PASSWORD=valo_secure_password_2026
+      - APP_KEY=DevelopmentSecretAppKeyDoNotUseInProd123!
+    ports:
+      - "13000:13000"
+
+  # --- NEXT.JS APP & BFF ---
+  nextjs-bff:
+    build:
+      context: ./apps/nextjs
+    container_name: valo-nextjs-bff
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://cache:6379
+      - NOCOBASE_API_URL=http://nocobase:13000/api/
+      - NEXTAUTH_SECRET=NextAuthSuperSecretPayloadDoNotUse987!
+      - NEXT_PUBLIC_API_BASE=http://localhost:8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
+  redis_data:
