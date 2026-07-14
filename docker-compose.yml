@@ -55,6 +55,20 @@ services:
     ports:
       - "13000:13000"
 
+  # --- HEURISTIC PRICING ENGINE ---
+  engine:
+    build:
+      context: ./apps/engine
+    container_name: valo-engine
+    restart: always
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   # --- NEXT.JS APP & BFF ---
   nextjs-bff:
     build:
@@ -66,10 +80,13 @@ services:
         condition: service_healthy
       cache:
         condition: service_healthy
+      engine:
+        condition: service_healthy
     environment:
       - NODE_ENV=development
       - REDIS_URL=redis://cache:6379
       - NOCOBASE_API_URL=http://nocobase:13000/api/
+      - PRICING_ENGINE_API_URL=http://engine:8000
       - NEXTAUTH_SECRET=NextAuthSuperSecretPayloadDoNotUse987!
       - NEXT_PUBLIC_API_BASE=http://localhost:8080
     ports:
