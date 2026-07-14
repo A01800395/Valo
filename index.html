@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valo - Heuristic Rules Engine Demo</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Valo - Real-Time Rate Optimization Engine for Independent Hotels. Transparent, deterministic, and automated room pricing without black-box machine learning.">
+  <meta name="author" content="Valo Pricing">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Design Tokens */
+    :root {
+      --bg-dark: #070913;
+      --bg-card: rgba(18, 22, 47, 0.7);
+      --bg-card-hover: rgba(26, 31, 62, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.2);
+      
+      --color-primary: #6366f1; /* Indigo */
+      --color-secondary: #06b6d4; /* Cyan */
+      --color-success: #10b981; /* Emerald */
+      --color-warning: #f59e0b; /* Amber */
+      --color-danger: #ef4444; /* Rose */
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-inverse: #0f172a;
+      
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-bottom: 3rem;
+      overflow-x: hidden;
+    }
+
+    /* Utility Layouts */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Header styling */
+    header {
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 2.5rem;
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: rgba(7, 9, 19, 0.8);
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-glow {
+      height: 2.2rem;
+      width: 2.2rem;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .logo-text {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #ffffff, #c7d2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-tagline {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-top: -3px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--color-success);
+      background: rgba(16, 185, 129, 0.1);
+      padding: 0.35rem 0.75rem;
+      border-radius: 99px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-dot {
+      height: 6px;
+      width: 6px;
+      background-color: var(--color-success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--color-success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+
+    /* Mode Toggles */
+    .mode-switch-container {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      padding: 0.25rem;
+      border-radius: 8px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mode-btn.active {
+      background: var(--color-primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    /* Main Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card styling */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.75rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+
+    /* Slider / Input Controls */
+    .control-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .control-label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .control-value {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--color-secondary);
+      background: rgba(6, 182, 212, 0.08);
+      padding: 0.1rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid rgba(6, 182, 212, 0.15);
+    }
+
+    .slider-input {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+      transition: transform 0.1s ease;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Radio button weather selector */
+    .weather-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .weather-option {
+      position: relative;
+    }
+
+    .weather-option input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .weather-box {
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      padding: 0.6rem;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .weather-option input:checked + .weather-box {
+      border-color: var(--color-primary);
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--text-main);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+    }
+
+    /* Pricing Output Card */
+    .output-card {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 5.5rem;
+    }
+
+    .price-display-wrapper {
+      background: linear-gradient(135deg, rgba(18, 22, 47, 0.85), rgba(10, 13, 30, 0.95));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      padding: 1.75rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
+    }
+
+    .price-display-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .price-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .price-value-container {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .price-currency {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-secondary);
+      font-family: var(--font-heading);
+    }
+
+    .price-amount {
+      font-size: 4rem;
+      font-weight: 800;
+      font-family: var(--font-heading);
+      letter-spacing: -2px;
+      color: var(--text-main);
+      text-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .price-amount.bump {
+      transform: scale(1.05);
+    }
+
+    .base-price-reference {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    /* Math Formula Display */
+    .formula-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .formula-card span {
+      color: var(--color-secondary);
+    }
+
+    /* Audit Log / Modifiers */
+    .modifier-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .modifier-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .modifier-item.active-positive {
+      border-color: rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .modifier-item.active-negative {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .modifier-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .modifier-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .modifier-detail {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .modifier-value {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+
+    .active-positive .modifier-value {
+      color: var(--color-success);
+    }
+
+    .active-negative .modifier-value {
+      color: var(--color-danger);
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      background: linear-gradient(135deg, var(--color-primary), #4f46e5);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Notification / Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: rgba(18, 22, 47, 0.95);
+      border: 1px solid var(--color-primary);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transform: translateY(150%);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+    }
+
+    .toast-icon {
+      color: var(--color-success);
+      display: flex;
+    }
+
+    .toast-text {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    /* SVG Icons styling */
+    .icon-svg {
+      width: 1.2rem;
+      height: 1.2rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Target safety envelopes indicator */
+    .safety-alert {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: var(--color-warning);
+      font-size: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .safety-alert.visible {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dashboard Header -->
+  <header>
+    <div class="container header-container">
+      <div class="brand">
+        <div class="logo-glow">V</div>
+        <div>
+          <h1 class="logo-text">Valo</h1>
+          <div class="logo-tagline">Heuristic Engine</div>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <!-- System Health -->
+        <div class="system-status">
+          <div class="status-dot"></div>
+          <span>PMS Live Sync</span>
+        </div>
+        
+        <!-- Auto-Pilot / Co-Pilot Mode Selector -->
+        <div class="mode-switch-container">
+          <button id="copilotBtn" class="mode-btn active" onclick="setMode('copilot')">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-7.35 16.76l1.42-1.42A8 8 0 1 1 12 20v2a10 10 0 0 0 0-20z"/><path d="M12 6a6 6 0 1 0 0 12v-2a4 4 0 1 1 0-8V6z"/></svg>
+            Co-Pilot
+          </button>
+          <button id="autopilotBtn" class="mode-btn" onclick="setMode('autopilot')">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="m12 3-1.912 5.886H3.879l5.037 3.659L6.993 18.43 12 14.772l5.007 3.659-1.923-5.885 5.037-3.66H13.912L12 3z"/></svg>
+            Auto-Pilot
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Dashboard Grid -->
+  <main class="container">
+    <div class="dashboard-grid">
+      
+      <!-- Left Panel: Engine Parameters & Sliders -->
+      <section class="card">
+        <h2 class="card-title">
+          <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Parametric Rule Inputs
+        </h2>
+        
+        <!-- Base Room Rate -->
+        <div class="control-group">
+          <div class="control-header">
+            <span class="control-label">Base Rate (Hotel standard pricing)</span>
+            <span class="control-value">£<span id="baseRateVal">150</span></span>
+          </div>
+          <input type="range" id="baseRate" class="slider-input" min="50" max="400" value="150" oninput="calculateRate()">
+        </div>
+
+        <!-- Occupancy % -->
+        <div class="control-group">
+          <div class="control-header">
+            <span class="control-label">PMS Occupancy Rate</span>
+            <span class="control-value"><span id="occupancyVal">65</span>%</span>
+          </div>
+          <input type="range" id="occupancy" class="slider-input" min="0" max="100" value="65" oninput="calculateRate()">
+        </div>
+
+        <!-- Days to Arrival -->
+        <div class="control-group">
+          <div class="control-header">
+            <span class="control-label">Lead Time (Days to Arrival)</span>
+            <span class="control-value"><span id="daysVal">5</span> Days</span>
+          </div>
+          <input type="range" id="days" class="slider-input" min="1" max="30" value="5" oninput="calculateRate()">
+        </div>
+
+        <!-- Event Capacity -->
+        <div class="control-group">
+          <div class="control-header">
+            <span class="control-label">Nearest Event Capacity (PredictHQ)</span>
+            <span class="control-value"><span id="eventCapVal">25,000</span> attendees</span>
+          </div>
+          <input type="range" id="eventCap" class="slider-input" min="0" max="80000" step="1000" value="25000" oninput="calculateRate()">
+        </div>
+
+        <!-- Event Proximity -->
+        <div class="control-group">
+          <div class="control-header">
+            <span class="control-label">Distance to Event Venue</span>
+            <span class="control-value"><span id="eventDistVal">1.5</span> km</span>
+          </div>
+          <input type="range" id="eventDist" class="slider-input" min="0.5" max="10.0" step="0.1" value="1.5" oninput="calculateRate()">
+        </div>
+
+        <!-- Weather Selector -->
+        <div class="control-group">
+          <span class="control-label">Weather Forecast (OpenWeatherMap)</span>
+          <div class="weather-selector">
+            <label class="weather-option">
+              <input type="radio" name="weather" value="sunny" onclick="calculateRate()">
+              <div class="weather-box">
+                <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                Sunny (&gt;18°C)
+              </div>
+            </label>
+            <label class="weather-option">
+              <input type="radio" name="weather" value="normal" checked onclick="calculateRate()">
+              <div class="weather-box">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.42 0-.83.07-1.22.2A6 6 0 0 0 3 11.5c0 3.59 2.91 6.5 6.5 6.5h8z"/></svg>
+                Normal
+              </div>
+            </label>
+            <label class="weather-option">
+              <input type="radio" name="weather" value="rainy" onclick="calculateRate()">
+              <div class="weather-box">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25M8 16v6M12 16v6M16 16v6"/></svg>
+                Heavy Rain / Storm
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Competitor Rate -->
+        <div class="control-group" style="margin-bottom: 0;">
+          <div class="control-header">
+            <span class="control-label">Average Competitor Rate (5 local hotels)</span>
+            <span class="control-value">£<span id="compRateVal">160</span></span>
+          </div>
+          <input type="range" id="compRate" class="slider-input" min="50" max="400" value="160" oninput="calculateRate()">
+        </div>
+      </section>
+
+      <!-- Right Panel: Final Rate & Audit Log -->
+      <section class="output-card">
+        
+        <!-- Live Rate Display -->
+        <div class="price-display-wrapper">
+          <div class="price-label" id="rateTitle">Suggested Rate</div>
+          <div class="price-value-container">
+            <span class="price-currency">£</span>
+            <span id="finalRate" class="price-amount">187.50</span>
+          </div>
+          <div class="base-price-reference">Original Base Rate: £<span id="baseRef">150</span></div>
+          
+          <!-- Safety boundary warning -->
+          <div id="safetyWarning" class="safety-alert">
+            <svg class="icon-svg" style="width:1rem;height:1rem;" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Safety Limit Triggered: Rate capped at ceiling (£280.00)</span>
+          </div>
+        </div>
+
+        <!-- Mathematical Blueprint Formula -->
+        <div class="formula-card">
+          Rate<sub>final</sub> = Base × (1 + <span id="formulaEvent">S<sub>event</sub></span> + <span id="formulaOcc">S<sub>occupancy</sub></span> + <span id="formulaWeather">S<sub>weather</sub></span> + <span id="formulaComp">S<sub>competitor</sub></span>)
+        </div>
+
+        <!-- Interactive Audit Log (Transparency Engine) -->
+        <div class="card" style="padding: 1.5rem;">
+          <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem; padding-bottom: 0.5rem;">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Transparent Price Audit Log
+          </h3>
+          
+          <div class="modifier-list">
+            <!-- Event Modifier -->
+            <div id="itemEvent" class="modifier-item">
+              <div class="modifier-info">
+                <span class="modifier-name">Event Modifier (S<sub>event</sub>)</span>
+                <span id="eventDetails" class="modifier-detail">Within 3km &gt;20,000 capacity</span>
+              </div>
+              <span id="valEvent" class="modifier-value">+0.0%</span>
+            </div>
+
+            <!-- Occupancy Modifier -->
+            <div id="itemOcc" class="modifier-item">
+              <div class="modifier-info">
+                <span class="modifier-name">Occupancy Modifier (S<sub>occupancy</sub>)</span>
+                <span id="occDetails" class="modifier-detail">Current PMS occupancy & lead time</span>
+              </div>
+              <span id="valOcc" class="modifier-value">+0.0%</span>
+            </div>
+
+            <!-- Weather Modifier -->
+            <div id="itemWeather" class="modifier-item">
+              <div class="modifier-info">
+                <span class="modifier-name">Weather Modifier (S<sub>weather</sub>)</span>
+                <span id="weatherDetails" class="modifier-detail">Forecasted weather parameters</span>
+              </div>
+              <span id="valWeather" class="modifier-value">+0.0%</span>
+            </div>
+
+            <!-- Competitor Modifier -->
+            <div id="itemComp" class="modifier-item">
+              <div class="modifier-info">
+                <span class="modifier-name">Competitor Modifier (S<sub>competitor</sub>)</span>
+                <span id="compDetails" class="modifier-detail">Scraped local competitor average</span>
+              </div>
+              <span id="valComp" class="modifier-value">+0.0%</span>
+            </div>
+          </div>
+
+          <!-- Interactive Action (Auto-Pilot / Co-Pilot Sensitive) -->
+          <button id="actionBtn" class="action-btn" onclick="triggerPmsSync()">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Approve & Sync to PMS</span>
+          </button>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Live Toast Notification -->
+  <div id="toastNotification" class="toast">
+    <div class="toast-icon">
+      <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <span id="toastMsg" class="toast-text">Rates successfully pushed to Cloudbeds!</span>
+  </div>
+
+  <!-- JavaScript pricing calculations and UI state -->
+  <script>
+    // Hardcoded Safety Boundaries Envelopes
+    const safetyFloorPercent = 0.70; // Hard Floor: no lower than 70% of Base Rate
+    const safetyCeilingLimit = 280;   // Hard absolute ceiling price
+
+    let currentMode = 'copilot';
+
+    function setMode(mode) {
+      currentMode = mode;
+      
+      const copilotBtn = document.getElementById('copilotBtn');
+      const autopilotBtn = document.getElementById('autopilotBtn');
+      const actionBtn = document.getElementById('actionBtn');
+      const rateTitle = document.getElementById('rateTitle');
+
+      if (mode === 'autopilot') {
+        copilotBtn.classList.remove('active');
+        autopilotBtn.classList.add('active');
+        rateTitle.textContent = "Auto-Optimized Rate";
+        
+        // Disable manual approval button on autopilot
+        actionBtn.style.opacity = '0.6';
+        actionBtn.style.cursor = 'not-allowed';
+        actionBtn.querySelector('span').textContent = 'Auto-Pilot Mode Active';
+        
+        showToast("Auto-Pilot Mode Activated: Rates will sync automatically every 4 hours.");
+      } else {
+        autopilotBtn.classList.remove('active');
+        copilotBtn.classList.add('active');
+        rateTitle.textContent = "Suggested Rate";
+        
+        // Enable manual approval
+        actionBtn.style.opacity = '1';
+        actionBtn.style.cursor = 'pointer';
+        actionBtn.querySelector('span').textContent = 'Approve & Sync to PMS';
+        
+        showToast("Co-Pilot Mode Activated: Rates require manual approval before syncing.");
+      }
+      calculateRate();
+    }
+
+    function calculateRate() {
+      // 1. Get raw values from controls
+      const base = parseFloat(document.getElementById('baseRate').value);
+      const occupancy = parseFloat(document.getElementById('occupancy').value);
+      const days = parseInt(document.getElementById('days').value);
+      const eventCap = parseFloat(document.getElementById('eventCap').value);
+      const eventDist = parseFloat(document.getElementById('eventDist').value);
+      const compRate = parseFloat(document.getElementById('compRate').value);
+      
+      // Get selected weather value
+      const weatherRadio = document.querySelector('input[name="weather"]:checked');
+      const weather = weatherRadio ? weatherRadio.value : 'normal';
+
+      // Update UI labels
+      document.getElementById('baseRateVal').textContent = base;
+      document.getElementById('occupancyVal').textContent = occupancy;
+      document.getElementById('daysVal').textContent = days;
+      document.getElementById('eventCapVal').textContent = eventCap.toLocaleString();
+      document.getElementById('eventDistVal').textContent = eventDist;
+      document.getElementById('compRateVal').textContent = compRate;
+      document.getElementById('baseRef').textContent = base;
+
+      // 2. Modifiers Logic Configuration
+      
+      // A. Event Modifier (S_event)
+      // Rule: If capacity > 20,000 and distance <= 3km
+      let sEvent = 0.00;
+      if (eventCap > 20000 && eventDist <= 3) {
+        sEvent = Math.min(0.40, (eventCap / 100000) * (1 / eventDist));
+      }
+      
+      // B. Occupancy Modifier (S_occupancy)
+      // Rule 1: If Occupancy > 80% and days to arrival <= 7
+      // Rule 2: If Occupancy < 30% and days to arrival <= 3
+      let sOccupancy = 0.00;
+      let occDetailsText = "Lead time: " + days + " days, Occupancy: " + occupancy + "%";
+      if (occupancy > 80 && days <= 7) {
+        sOccupancy = 0.20;
+        occDetailsText = "High Occupancy alert (+" + (sOccupancy * 100) + "%)";
+      } else if (occupancy < 30 && days <= 3) {
+        sOccupancy = -0.15;
+        occDetailsText = "Low Occupancy relief (-" + (Math.abs(sOccupancy) * 100) + "%)";
+      } else {
+        occDetailsText = "Normal demand occupancy range (+0%)";
+      }
+
+      // C. Weather Modifier (S_weather)
+      // Rule 1: sunny and avg temp > 18 (Represented by sunny selector)
+      // Rule 2: Active storm/heavy rain selector
+      let sWeather = 0.00;
+      let weatherDetailsText = "Normal local weather conditions";
+      if (weather === 'sunny') {
+        sWeather = 0.10;
+        weatherDetailsText = "Sunny forecast premium (+" + (sWeather * 100) + "%)";
+      } else if (weather === 'rainy') {
+        sWeather = -0.05;
+        weatherDetailsText = "Heavy storm reduction (-" + (Math.abs(sWeather) * 100) + "%)";
+      }
+
+      // D. Competitor Modifier (S_competitor)
+      // Rule 1: Comp rate > 1.25 * Base
+      // Rule 2: Comp rate < 0.85 * Base
+      let sCompetitor = 0.00;
+      let compDetailsText = "Avg competitor price: £" + compRate;
+      if (compRate > 1.25 * base) {
+        sCompetitor = 0.15;
+        compDetailsText = "Competitors priced high (+" + (sCompetitor * 100) + "%)";
+      } else if (compRate < 0.85 * base) {
+        sCompetitor = -0.10;
+        compDetailsText = "Competitors pricing undercuts (-" + (Math.abs(sCompetitor) * 100) + "%)";
+      } else {
+        compDetailsText = "Competitors pricing within normal bands";
+      }
+
+      // 3. Mathematical Formula Execution
+      const modifierSum = sEvent + sOccupancy + sWeather + sCompetitor;
+      let computedRate = base * (1 + modifierSum);
+      
+      // 4. Safety Boundary Envelopes Check
+      const hardFloorLimit = base * safetyFloorPercent;
+      let isCapped = false;
+      let safetyMsg = "";
+
+      if (computedRate < hardFloorLimit) {
+        computedRate = hardFloorLimit;
+        isCapped = true;
+        safetyMsg = `Safety Boundary Triggered: Floor rate protection locked at £${hardFloorLimit.toFixed(2)}`;
+      } else if (computedRate > safetyCeilingLimit) {
+        computedRate = safetyCeilingLimit;
+        isCapped = true;
+        safetyMsg = `Safety Boundary Triggered: Ceil rate cap locked at £${safetyCeilingLimit.toFixed(2)}`;
+      }
+
+      // Update safety indicator UI
+      const safetyBox = document.getElementById('safetyWarning');
+      if (isCapped) {
+        safetyBox.querySelector('span').textContent = safetyMsg;
+        safetyBox.classList.add('visible');
+      } else {
+        safetyBox.classList.remove('visible');
+      }
+
+      // 5. Update UI Audit Logs Values
+      updateAuditUI('itemEvent', 'valEvent', 'eventDetails', sEvent, eventCap > 20000 && eventDist <= 3 ? `Event within ${eventDist}km (${Math.round(eventCap/1000)}k cap)` : "No major events nearby");
+      updateAuditUI('itemOcc', 'valOcc', 'occDetails', sOccupancy, occDetailsText);
+      updateAuditUI('itemWeather', 'valWeather', 'weatherDetails', sWeather, weatherDetailsText);
+      updateAuditUI('itemComp', 'valComp', 'compDetails', sCompetitor, compDetailsText);
+
+      // Formula panel highlighting
+      highlightFormulaComponent('formulaEvent', sEvent !== 0);
+      highlightFormulaComponent('formulaOcc', sOccupancy !== 0);
+      highlightFormulaComponent('formulaWeather', sWeather !== 0);
+      highlightFormulaComponent('formulaComp', sCompetitor !== 0);
+
+      // Output main price text
+      const priceValNode = document.getElementById('finalRate');
+      const formattedPrice = computedRate.toFixed(2);
+      
+      if (priceValNode.textContent !== formattedPrice) {
+        priceValNode.textContent = formattedPrice;
+        priceValNode.classList.add('bump');
+        setTimeout(() => priceValNode.classList.remove('bump'), 200);
+      }
+    }
+
+    function updateAuditUI(itemId, valId, detailId, value, detailText) {
+      const itemEl = document.getElementById(itemId);
+      const valEl = document.getElementById(valId);
+      const detailEl = document.getElementById(detailId);
+      
+      // Update values
+      const pctStr = (value >= 0 ? '+' : '') + (value * 100).toFixed(1) + '%';
+      valEl.textContent = pctStr;
+      detailEl.textContent = detailText;
+
+      // Update classes for color coding
+      itemEl.classList.remove('active-positive', 'active-negative');
+      if (value > 0) {
+        itemEl.classList.add('active-positive');
+      } else if (value < 0) {
+        itemEl.classList.add('active-negative');
+      }
+    }
+
+    function highlightFormulaComponent(id, active) {
+      const el = document.getElementById(id);
+      if (active) {
+        el.style.color = 'var(--color-secondary)';
+        el.style.fontWeight = '700';
+      } else {
+        el.style.color = 'var(--text-muted)';
+        el.style.fontWeight = 'normal';
+      }
+    }
+
+    function triggerPmsSync() {
+      if (currentMode === 'autopilot') return; // Click has no action on autopilot mode
+      
+      const finalPrice = document.getElementById('finalRate').textContent;
+      showToast(`Approved! Pushed £${finalPrice} rate live to Cloudbeds & Mews successfully.`);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMsg');
+      
+      toastMsg.textContent = message;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    // Initial load execution
+    calculateRate();
+  </script>
+</body>
+</html>
